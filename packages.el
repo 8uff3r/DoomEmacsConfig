@@ -112,19 +112,18 @@
   (:host github
    :repo "manateelazycat/aweshell"))
 
-(package! vertico-posframe :recipe (:host github :repo "tumashu/vertico-posframe"))
 (package! treesit-auto
   :recipe
   (:host github
    :repo "renzmann/treesit-auto"
    :files ("*.el")))
 
-(package! combobulate
-  :recipe (
-           :host github
-           :repo "mickeynp/combobulate"
-           :files ("*.el")))
-
+;; (package! combobulate
+;;   :recipe (
+;;            :host github
+;;            :repo "mickeynp/combobulate"
+;;            :files ("*.el")))
 (package! centaur-tabs)
+(package! multiple-cursors)
 (provide 'packages)
 ;;; packages.el ends here

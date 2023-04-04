@@ -4,6 +4,7 @@
 
 (setq doom-theme 'doom-acario-dark)
 
+(setq use-package-always-defer 't)
 (setq display-line-numbers-type 'relative)
 (setq scroll-margin 8)
 (setq maximum-scroll-margin 8)
@@ -365,7 +366,6 @@
    :ne "s-a" #'aweshell-dedicated-toggle))
 
 (use-package flycheck
-  :defer t
   :config
   ;; disable json-jsonlist checking for json files
   (setq-default flycheck-disabled-checkers (append flycheck-disabled-checkers '(json-jsonlist)))
@@ -373,12 +373,10 @@
   (setq-default flycheck-disabled-checkers (append flycheck-disabled-checkers '(javascript-jshint))))
 
 (use-package! cus-edit
-  :defer t
   :custom
   (custom-file null-device "Don't store customizations"))
 
 (use-package! frog-jump-buffer
-  :defer t
   :config
   (setq frog-jump-buffer-use-all-the-icons-ivy t
         setq frog-menu-posframe-border-width 20)
@@ -386,6 +384,7 @@
   (custom-set-faces '(frog-menu-border ((t (:background "Red"))))))
 
 (use-package! vertico
+  :defer 1
   :custom
   ;; (vertico-count 13)                    ; Number of candidates to display
   (vertico-resize t)
@@ -420,6 +419,15 @@
 ;;   :after vertico
 ;;   :config
 ;;   (vertico-posframe-mode 1))
+
+(use-package zoom
+  :hook (doom-first-input . zoom-mode)
+  :config
+  (setq zoom-size '(0.7 . 0.7)
+        zoom-ignored-major-modes '(dired-mode vterm-mode help-mode helpful-mode rxt-help-mode help-mode-menu org-mode)
+        zoom-ignored-buffer-names '("*doom:scratch*" "*info*" "*helpful variable: argv*")
+        zoom-ignored-buffer-name-regexps '("^\\*calc" "\\*helpful variable: .*\\*" "\\*helpful")
+        zoom-ignore-predicates (list (lambda () (> (count-lines (point-min) (point-max)) 20)))))
 
 (add-load-path! "~/.config/emacs/.local/straight/build-29.0.60/corfu/extensions/")
 (use-package! corfu-popupinfo)
@@ -476,19 +484,20 @@
         completion-category-defaults nil
         completion-category-overrides nil))
 
-(use-package! lsp-mode
-  :custom
-  (lsp-completion-provider :none) ;; we use Corfu!
-  :init
-  (defun my/lsp-mode-setup-completion ()
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(orderless))) ;; Configure orderless
-  :hook
-  (lsp-completion-mode . my/lsp-mode-setup-completion))
+;; (use-package! lsp-mode
+;;   :custom
+;;   (lsp-completion-provider :none) ;; we use Corfu!
+;;   :init
+;;   (defun my/lsp-mode-setup-completion ()
+;;     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+;;           '(orderless))) ;; Configure orderless
+;;   :hook
+;;   (lsp-completion-mode . my/lsp-mode-setup-completion))
 
 ;; Add extensions
 (use-package cape
-  :disabled
+  ;; :disabled
+  :after curfo
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -509,7 +518,6 @@
 (custom-set-faces! `(corfu-bar :background ,(doom-color 'magenta)))
 
 (use-package! treemacs
-  :defer t
   :init
   (treemacs-project-follow-mode t)
   :custom
@@ -521,24 +529,20 @@
   (treemacs-load-theme "doom-colors"))
 
 (use-package! treemacs-projectile
-  :defer t
   :after (treemacs projectile))
 
 (use-package! treemacs-icons-dired
-  :defer t
   :hook (dired-mode . treemacs-icons-dired-enable-once))
 (use-package treemacs-magit
-  :after (treemacs magit)
-  :defer t)
+  :after (treemacs magit))
 
-(use-package treemacs-ll-the-icons
-  :defer t)
+(use-package treemacs-ll-the-icons)
 
 (use-package lsp-treemacs
-  :after (treemacs lsp-mode treemacs-all-the-icons)
-  :defer t)
+  :after (treemacs lsp-mode treemacs-all-the-icons))
 
 (use-package treesit
+  :defer 5
   :custom
   (treesit-font-lock-level 4))
 
@@ -550,7 +554,7 @@
   (add-to-list 'treesit-language-source-alist `(tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" nil "tsx/src" nil nil)))
   (add-to-list 'treesit-language-source-alist `(elixir . ("https://github.com/elixir-lang/tree-sitter-elixir" nil nil nil nil)))
   (add-to-list 'treesit-language-source-alist `(heex-ts-mode . ("https://github.com/phoenixframework/tree-sitter-heex" nil nil nil nil)))
-  (add-to-list 'treesit-language-source-alist `(ruby . ("https://github.com/tree-sitter/tree-sitter-ruby" nil nil nil nil)))
+  (add-to-list 'treesit-language-source-alist `(bash . ("https://github.com/tree-sitter/tree-sitter-bash" nil nil nil nil)))
   (add-to-list 'treesit-language-source-alist `(scss . ("https://github.com/serenadeai/tree-sitter-scss" nil nil nil nil))))
 
 (use-package combobulate
@@ -561,26 +565,24 @@
          (typescript-ts-mode . combobulate-mode)
          (tsx-ts-mode . combobulate-mode)))
 
-(use-package typescript-ts-mode
-  :mode (("\\.ts\\'" . typescript-ts-mode))
-  :hook (typescript-ts-mode . lsp-bridge-mode)
-  :hook (typescript-ts-mode . +javascript-add-npm-path-h)
-  :hook (typescript-ts-mode . apheleia-mode)
-  :custom (js-indent-level 2))
-
-(add-load-path! "~/.config/emacs/.local/lsp-bridge")
-;; (require 'lsp-bridge)
 (use-package! lsp-bridge
-   :config
-  (global-lsp-bridge-mode))
+  :load-path "~/.config/emacs/.local/lsp-bridge"
+  :mode
+  (("\\.ts\\'" . lsp-bridge-mode)))
 
 (use-package tide
-  :ensure t
   :after (company flycheck)
   :hook ((typescript-ts-mode . tide-setup)
          (tsx-ts-mode . tide-setup)
          (typescript-ts-mode . tide-hl-identifier-mode)
          (before-save . tide-format-before-save)))
+
+(use-package! typescript-ts-mode
+  :mode (("\\.ts\\'" . typescript-ts-mode))
+  :hook (typescript-ts-mode . lsp-bridge-mode)
+  :hook (typescript-ts-mode . +javascript-add-npm-path-h)
+  :hook (typescript-ts-mode . apheleia-mode)
+  :custom (js-indent-level 2))
 
 (use-package! rainbow-delimiters
   :hook ((typescript-ts-mode . rainbow-delimiters-mode)))

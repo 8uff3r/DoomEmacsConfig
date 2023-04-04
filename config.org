@@ -8,7 +8,6 @@ sync' after modifying this file!
 Some functionality uses this to identify you, e.g. GPG configuration, email
 clients, file templates and snippets. It is optional.
 #+begin_src emacs-lisp
-
 ;;; config.el -*- lexical-binding: t; -*-
 (setq user-full-name "Rylan"
       user-mail-address "8uff3r@gmail.com")
@@ -47,6 +46,7 @@ This determines the style of line numbers in effect. If set to `nil', line
 numbers are disabled. For relative line numbers, set this to `relative'.
 
 #+begin_src emacs-lisp
+(setq use-package-always-defer 't)
 (setq display-line-numbers-type 'relative)
 (setq scroll-margin 8)
 (setq maximum-scroll-margin 8)
@@ -94,7 +94,6 @@ they are implemented.
 * Basic Settings
 
 #+begin_src emacs-lisp
-
 (set-popup-rules!
  '(("^ \\*" :slot -1)
    ("\\*Org Agenda\\*")
@@ -539,7 +538,6 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 * Flycheck
 #+begin_src emacs-lisp :tangle yes
 (use-package flycheck
-  :defer t
   :config
   ;; disable json-jsonlist checking for json files
   (setq-default flycheck-disabled-checkers (append flycheck-disabled-checkers '(json-jsonlist)))
@@ -549,14 +547,12 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 * Cus-edit
 #+begin_src emacs-lisp
 (use-package! cus-edit
-  :defer t
   :custom
   (custom-file null-device "Don't store customizations"))
 #+end_src
 * Frog-jump-buffer
 #+begin_src emacs-lisp
 (use-package! frog-jump-buffer
-  :defer t
   :config
   (setq frog-jump-buffer-use-all-the-icons-ivy t
         setq frog-menu-posframe-border-width 20)
@@ -566,7 +562,6 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 * Orderless
 #+begin_src emacs-lisp :tangle no
 (use-package orderless
-  :defer t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
@@ -576,6 +571,7 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 * Vertico
 #+begin_src emacs-lisp
 (use-package! vertico
+  :defer 1
   :custom
   ;; (vertico-count 13)                    ; Number of candidates to display
   (vertico-resize t)
@@ -613,7 +609,7 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 
 #+end_src
 * Zoom
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp :tangle yes
 (use-package zoom
   :hook (doom-first-input . zoom-mode)
   :config
@@ -680,19 +676,20 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
         completion-category-defaults nil
         completion-category-overrides nil))
 
-(use-package! lsp-mode
-  :custom
-  (lsp-completion-provider :none) ;; we use Corfu!
-  :init
-  (defun my/lsp-mode-setup-completion ()
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(orderless))) ;; Configure orderless
-  :hook
-  (lsp-completion-mode . my/lsp-mode-setup-completion))
+;; (use-package! lsp-mode
+;;   :custom
+;;   (lsp-completion-provider :none) ;; we use Corfu!
+;;   :init
+;;   (defun my/lsp-mode-setup-completion ()
+;;     (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+;;           '(orderless))) ;; Configure orderless
+;;   :hook
+;;   (lsp-completion-mode . my/lsp-mode-setup-completion))
 
 ;; Add extensions
 (use-package cape
-  :disabled
+  ;; :disabled
+  :after curfo
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
   (add-to-list 'completion-at-point-functions #'cape-file)
@@ -716,7 +713,6 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 * Treemacs
 #+begin_src elisp
 (use-package! treemacs
-  :defer t
   :init
   (treemacs-project-follow-mode t)
   :custom
@@ -728,26 +724,22 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
   (treemacs-load-theme "doom-colors"))
 
 (use-package! treemacs-projectile
-  :defer t
   :after (treemacs projectile))
 
 (use-package! treemacs-icons-dired
-  :defer t
   :hook (dired-mode . treemacs-icons-dired-enable-once))
 (use-package treemacs-magit
-  :after (treemacs magit)
-  :defer t)
+  :after (treemacs magit))
 
-(use-package treemacs-ll-the-icons
-  :defer t)
+(use-package treemacs-ll-the-icons)
 
 (use-package lsp-treemacs
-  :after (treemacs lsp-mode treemacs-all-the-icons)
-  :defer t)
+  :after (treemacs lsp-mode treemacs-all-the-icons))
 #+end_src
 * Treesit
 #+begin_src elisp
 (use-package treesit
+  :defer 5
   :custom
   (treesit-font-lock-level 4))
 
@@ -759,7 +751,7 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
   (add-to-list 'treesit-language-source-alist `(tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" nil "tsx/src" nil nil)))
   (add-to-list 'treesit-language-source-alist `(elixir . ("https://github.com/elixir-lang/tree-sitter-elixir" nil nil nil nil)))
   (add-to-list 'treesit-language-source-alist `(heex-ts-mode . ("https://github.com/phoenixframework/tree-sitter-heex" nil nil nil nil)))
-  (add-to-list 'treesit-language-source-alist `(ruby . ("https://github.com/tree-sitter/tree-sitter-ruby" nil nil nil nil)))
+  (add-to-list 'treesit-language-source-alist `(bash . ("https://github.com/tree-sitter/tree-sitter-bash" nil nil nil nil)))
   (add-to-list 'treesit-language-source-alist `(scss . ("https://github.com/serenadeai/tree-sitter-scss" nil nil nil nil))))
 
 (use-package combobulate
@@ -770,29 +762,18 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
          (typescript-ts-mode . combobulate-mode)
          (tsx-ts-mode . combobulate-mode)))
 #+end_src
-** Typescript
-#+begin_src elisp
-(use-package typescript-ts-mode
-  :mode (("\\.ts\\'" . typescript-ts-mode))
-  :hook (typescript-ts-mode . lsp-bridge-mode)
-  :hook (typescript-ts-mode . +javascript-add-npm-path-h)
-  :hook (typescript-ts-mode . apheleia-mode)
-  :custom (js-indent-level 2))
-#+end_src
 * Lsp-bridge
 #+begin_src elisp :tangle yes
-(add-load-path! "~/.config/emacs/.local/lsp-bridge")
-;; (require 'lsp-bridge)
 (use-package! lsp-bridge
-   :config
-  (global-lsp-bridge-mode))
+  :load-path "~/.config/emacs/.local/lsp-bridge"
+  :mode
+  (("\\.ts\\'" . lsp-bridge-mode)))
 #+end_src
 * TIDE
 ** Regular typescript-mode
 #+begin_src elisp :tangle no
 ;; if you use typescript-mode
 (use-package tide
-  :ensure t
   :after (typescript-mode company flycheck)
   :hook ((typescript-mode . tide-setup)
          (typescript-mode . tide-hl-identifier-mode)
@@ -802,12 +783,20 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
 ** ts-typescript
 #+begin_src elisp :tangle yes
 (use-package tide
-  :ensure t
   :after (company flycheck)
   :hook ((typescript-ts-mode . tide-setup)
          (tsx-ts-mode . tide-setup)
          (typescript-ts-mode . tide-hl-identifier-mode)
          (before-save . tide-format-before-save)))
+#+end_src
+** Typescript
+#+begin_src elisp
+(use-package! typescript-ts-mode
+  :mode (("\\.ts\\'" . typescript-ts-mode))
+  :hook (typescript-ts-mode . lsp-bridge-mode)
+  :hook (typescript-ts-mode . +javascript-add-npm-path-h)
+  :hook (typescript-ts-mode . apheleia-mode)
+  :custom (js-indent-level 2))
 #+end_src
 * Rainbow-Delimiters
 #+begin_src elisp
@@ -815,22 +804,62 @@ Some minimal org mode tweaks: org-superstar gives our headings (h1, h2, h3...) a
   :hook ((typescript-ts-mode . rainbow-delimiters-mode)))
 #+end_src
 
-* DEFERS
-#+begin_src emacs-lisp :tangle no
-(use-package! calc
-  :defer t)
-(use-package! projectile
-  :defer t)
-(use-package! eshell
-  :defer t)
-(use-package! magit
-  :defer t)
-(use-package! company-box-icons
-  :defer t
+* Gerbil/Gambit
+#+begin_src elisp :tangle no
+(add-load-path! "~/.config/emacs/.local/lisps/")
+(use-package! geiser-gambit
+:after geiser)
+(use-package! gerbil-mode
+  ;; :when (getenv "GERBIL_HOME")
+  :mode (("\\.ss\\'"  . gerbil-mode)
+         ("\\.pkg\\'" . gerbil-mode))
+  :bind (:map comint-mode-map
+              (("C-S-n" . comint-next-input)
+               ("C-S-p" . comint-previous-input)
+               ("C-S-l" . clear-comint-buffer))
+              :map gerbil-mode-map
+              (("C-S-l" . clear-comint-buffer)))
+  :init
+  (setf gambit (getenv "GAMBIT_HOME"))
+  (setf gerbil (getenv "GERBIL_HOME"))
+  (autoload 'gerbil-mode
+    (concat gerbil "/etc/gerbil-mode.el") "Gerbil editing mode." t)
   :hook
-  '((company-mode . company-box-mode)))
-(use-package! company-capf
-  :defer t)
-(use-package! compile
-  :defer t)
+  ((gerbil-mode . linum-mode)
+   (inferior-scheme-mode-hook . gambit-inferior-mode))
+  :config
+  (require 'gambit
+           (concat gambit
+                   (if (equal "nixos" (system-name))
+                     "/share/emacs/site-lisp/gambit.el"
+                     "/misc/gambit.el")))
+  (setf scheme-program-name (concat gerbil "/bin/gxi"))
+
+  (let ((tags (locate-dominating-file default-directory "TAGS")))
+    (when tags (visit-tags-table tags)))
+  (visit-tags-table (concat gerbil "/src/TAGS"))
+
+  (when (package-installed-p 'smartparens)
+    (sp-pair "'" nil :actions :rem)
+    (sp-pair "`" nil :actions :rem))
+
+  (defun clear-comint-buffer ()
+    (interactive)
+    (with-current-buffer "*scheme*"
+      (let ((comint-buffer-maximum-size 0))
+        (comint-truncate-buffer)))))
+
+(defun gerbil-setup-buffers ()
+  "Change current buffer mode to gerbil-mode and start a REPL"
+  (interactive)
+  (gerbil-mode)
+  (split-window-right)
+  (shrink-window-horizontally 2)
+  (let ((buf (buffer-name)))
+    (other-window 1)
+    (run-scheme "gxi")
+    (switch-to-buffer-other-window "*scheme*" nil)
+    (switch-to-buffer buf)))
+
+(global-set-key (kbd "C-c C-g") 'gerbil-setup-buffers)
 #+end_src
